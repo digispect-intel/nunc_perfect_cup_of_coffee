@@ -1,6 +1,11 @@
 from fasthtml.common import *
 from modules.ocr import process_image, extract_coffee_info
+from modules.recommender import get_recommendation
+import json
+import os
 
+if "MISTRAL_API_KEY" not in os.environ:
+    print("Warning: MISTRAL_API_KEY not set. ControlFlow agents will not work properly.")
 
 app, rt = fast_app(hdrs=(
     Link(rel="stylesheet", href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"),
@@ -88,11 +93,12 @@ async def process_preferences(request):
     acidity = form.get("acidity")
     drink_type = form.get("drink_type")
     
-    return Titled("Coffee Recommendation Results",
-        Container(cls="max-w-3xl mx-auto px-4 py-8")(
+    return Titled("Next Level Coffee | nunc.",
+        Div(cls="max-w-5xl mx-auto px-4 py-8")(
             Div(cls="flex justify-between items-center mb-8")(
-                H1("nunc.", cls="title-main text-left"),
-                H2("Perfect Cup of Coffee", cls="text-right text-lg font-bold")
+                # A("← Back to Home", href="/", cls="text-accent hover:underline font-bold mb-4 block"),
+                H1("Perfect Cup of Coffee", cls="title-main text-center mb-2")
+
             ),
             H1("Your Coffee Match", cls="text-4xl text-center mb-6"),
             Div(cls="card rounded-lg p-6 shadow-md")(
@@ -129,11 +135,10 @@ async def analyze_image(request):
     # 3. Extract coffee information
     # For demo purposes, we'll use placeholder data
     
-    return Titled("Coffee Package Analysis",
-        Container(cls="max-w-3xl mx-auto px-4 py-8")(
+    return Titled("Next Level Coffee | nunc.",
+        Div(cls="max-w-4xl mx-auto px-4 py-8")(
             Div(cls="flex justify-between items-center mb-8")(
-                H1("nunc.", cls="title-main text-left"),
-                H2("Perfect Cup of Coffee", cls="text-right text-lg font-bold")
+                H1("Perfect Cup of Coffee", cls="title-main text-left")
             ),
             H1("Coffee Package Analysis", cls="text-4xl text-center mb-6"),
             Div(cls="card rounded-lg p-6 shadow-md")(
@@ -178,7 +183,7 @@ async def post(request):
     # If nothing provided, use default
     if not has_image and not has_preferences:
         return Titled("Coffee Recommendation Results",
-            Container(cls="max-w-3xl mx-auto px-4 py-8")(
+            Div(cls="container max-w-3xl mx-auto px-4 py-8")(
                 Div(cls="flex justify-between items-center mb-8")(
                     H1("nunc.", cls="title-main text-left"),
                     H2("Perfect Cup of Coffee", cls="text-right text-lg font-bold")
