@@ -1,3 +1,4 @@
+import json
 from fasthtml.common import *
 from modules.ocr import process_image, extract_coffee_info
 from modules.recommender import get_recommendation
@@ -126,16 +127,96 @@ async def process_preferences(request):
         )
     )
 
+
+def parse_agent_response(response_text):
+    """Parse JSON from agent response text, with basic error handling
+    
+    Args:
+        response_text (str): The text response from the agent
+        
+    Returns:
+        dict: Parsed JSON as a dictionary, or empty dict if parsing fails
+    """
+    # Handle None response
+    if response_text is None:
+        print("Warning: Received None response from agent")
+        return {}
+        
+    try:
+        # Try to find JSON in the response
+        # Look for content between curly braces
+        json_start = response_text.find('{')
+        json_end = response_text.rfind('}') + 1
+        
+        if json_start >= 0 and json_end > json_start:
+            json_str = response_text[json_start:json_end]
+            return json.loads(json_str)
+        
+        # If no JSON found, try the whole text
+        return json.loads(response_text)
+    except json.JSONDecodeError:
+        print(f"Failed to parse JSON from: {response_text}")
+        return {}
+
+
 async def analyze_image(request):
     form = await request.form()
     
-    # In a real implementation, you would:
-    # 1. Get the image file from the form
-    # 2. Process it with your OCR module
-    # 3. Extract coffee information
-    # For demo purposes, we'll use placeholder data
+    # Get user preferences from the form
+    intensity = form.get("intensity", "medium")
+    flavor = form.get("flavor", "balanced")
+    acidity = form.get("acidity", "balanced")
+    drink_type = form.get("drink_type", "espresso")
     
-    return Titled("Next Level Coffee | nunc.",
+    # Collect user preferences
+    preferences = {
+        "intensity": intensity,
+        "flavor": flavor,
+        "acidity": acidity,
+        "drink_type": drink_type
+    }
+    
+    # Get the uploaded image
+    image_file = form.get("coffee-image")
+    
+    # Save the image temporarily
+    if image_file and hasattr(image_file, "filename") and image_file.filename:
+        temp_path = f"data/temp_{image_file.filename}"
+        import os
+        os.makedirs("data/temp", exist_ok=True)
+        temp_path = f"data/temp/{image_file.filename}"
+        with open(temp_path, "wb") as f:
+            content = await image_file.read()
+            f.write(content)
+        
+        ocr_result = process_image(temp_path)
+        parsed_ocr = parse_agent_response(ocr_result)
+
+        coffee_info = extract_coffee_info(parsed_ocr)
+        parsed_coffee_info = parse_agent_response(coffee_info)
+
+        recommendation = get_recommendation(preferences, parsed_coffee_info)
+        parsed_recommendation = parse_agent_response(recommendation)
+
+        # Clean up the temporary file
+        import os
+        os.remove(temp_path)
+        
+        # Format the results for display
+        return create_results_page(parsed_coffee_info, parsed_recommendation)
+
+    else:
+        # Handle case when no image is provided
+        return Titled("Error",
+            Div(cls="max-w-4xl mx-auto px-4 py-8")(
+                H1("Error", cls="text-4xl text-center mb-6"),
+                P("No image was provided. Please upload a coffee package image.", cls="text-center")
+            )
+        )
+
+def create_results_page(coffee_info, recommendation):
+    """Create a results page from coffee info and recommendations"""
+    return Titled("Coffee Analysis Results | nunc.",
         Div(cls="max-w-4xl mx-auto px-4 py-8")(
             Div(cls="flex justify-between items-center mb-8")(
                 H1("Perfect Cup of Coffee", cls="title-main text-left")
@@ -146,15 +227,21 @@ async def analyze_image(request):
                 
                 Div(cls="mt-6 p-4 bg-white rounded-lg border border-gray-200")(
                     H3("Package Details", cls="font-bold mb-2"),
-                    P("Origin: Colombia", cls="text-muted"),
-                    P("Roast Level: Medium", cls="text-muted"),
-                    P("Variety: Arabica", cls="text-muted"),
-                    P("Process: Washed", cls="text-muted"),
+                    P(f"Origin: {coffee_info.get('origin', 'Unknown')}", cls="text-muted"),
+                    P(f"Roast Level: {coffee_info.get('roast_level', 'Unknown')}", cls="text-muted"),
+                    P(f"Variety: {coffee_info.get('variety', 'Unknown')}", cls="text-muted"),
+                    P(f"Process: {coffee_info.get('process', 'Unknown')}", cls="text-muted"),
                     
                     H3("Recommended Brewing Parameters", cls="font-bold mt-4 mb-2"),
-                    P("Grind Size: Medium", cls="text-muted"),
-                    P("Water Temperature: 94°C", cls="text-muted"),
-                    P("Brewing Time: 3:00 minutes", cls="text-muted")
+                    P(f"Flow Rate: {recommendation.get('flow_rate', 'Unknown')}", cls="text-muted"),
+                    P(f"Brewing Temperature: {recommendation.get('brewing_temp', 'Unknown')}°C", cls="text-muted"),
+                    P(f"Grind Setting: {recommendation.get('grind_setting', 'Unknown')}", cls="text-muted"),
+                    P(f"Brew Ratio: {recommendation.get('brew_ratio', 'Unknown')}", cls="text-muted"),
+                    P(f"Brewing Time: {recommendation.get('brewing_time', 'Unknown')} seconds", cls="text-muted"),
+                    
+                    H3("Tasting Notes", cls="font-bold mt-4 mb-2"),
+                    P(recommendation.get('description', 'No description available'), cls="text-muted"),
+                    P(recommendation.get('notes', ''), cls="text-muted mt-2 italic")
                 ),
                 
                 Div(cls="mt-6")(
@@ -163,6 +250,7 @@ async def analyze_image(request):
             )
         )
     )
+
 
 @rt("/process", methods=["POST"])
 async def post(request):

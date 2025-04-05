@@ -6,3 +6,4 @@ pandas>=1.4.0
 scikit-learn>=1.0.0
 controlflow>=0.1.0
 langchain-mistralai>=0.0.3
+mistralai

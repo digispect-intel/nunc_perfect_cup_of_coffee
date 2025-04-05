@@ -1,61 +1,132 @@
+import json
 import controlflow as cf
-from PIL import Image
-import pytesseract
 import os
+import base64
+from mistralai import Mistral
 from modules.agent_config import setup_agents
 
+def extract_text_with_mistral_ocr(image_path):
+    """Extract text from an image using Mistral OCR"""
+    # Initialize Mistral client
+    api_key = os.environ.get("MISTRAL_API_KEY")
+    if not api_key:
+        raise ValueError("MISTRAL_API_KEY environment variable is required")
+    
+    client = Mistral(api_key=api_key)
+    
+    # Check if image_path is a URL or a local file
+    if image_path.startswith(('http://', 'https://')):
+        # Process image from URL
+        ocr_response = client.ocr.process(
+            model="mistral-ocr-latest",
+            document={
+                "type": "image_url",
+                "image_url": image_path
+            }
+        )
+    else:
+        # Encode local image to base64
+        with open(image_path, "rb") as image_file:
+            base64_image = base64.b64encode(image_file.read()).decode('utf-8')
+        
+        # Process image from base64
+        ocr_response = client.ocr.process(
+            model="mistral-ocr-latest",
+            document={
+                "type": "image_url",
+                "image_url": f"data:image/jpeg;base64,{base64_image}"
+            }
+        )
+    
+    # Return the extracted text
+    return ocr_response.text
+
+
 def process_image(image_path):
-    """Process an image using pytesseract OCR and enhance with MistralAI"""
-    # Basic OCR with pytesseract
+    """Process an image using Mistral OCR and enhance with ControlFlow"""
     try:
-        img = Image.open(image_path)
-        raw_text = pytesseract.image_to_string(img)
+        # Initialize Mistral client
+        api_key = os.environ.get("MISTRAL_API_KEY")
+        if not api_key:
+            raise ValueError("MISTRAL_API_KEY environment variable is required")
         
-        # Get OCR agent
-        agents = setup_agents()
-        ocr_agent = agents["ocr_agent"]
+        client = Mistral(api_key=api_key)
         
-        # Use ControlFlow agent to enhance OCR results
-        enhanced_result = ocr_agent.run(f"""
-        I have extracted text from a coffee package using OCR. 
-        The raw extracted text is:
-        {raw_text}
+        # Encode local image to base64
+        with open(image_path, "rb") as image_file:
+            base64_image = base64.b64encode(image_file.read()).decode('utf-8')
         
-        Please identify and extract the following information in JSON format:
-        - Country/Origin
-        - Roast Level (Light, Medium, Dark)
-        - Variety (Arabica, Robusta, etc.)
-        - Process (Washed, Natural, Honey, etc.)
+        # Process image from base64
+        ocr_response = client.ocr.process(
+            model="mistral-ocr-latest",
+            document={
+                "type": "image_url",
+                "image_url": f"data:image/jpeg;base64,{base64_image}"
+            }
+        )
         
-        If any information is missing, indicate with "Unknown".
-        """)
+        # Let's print the entire response structure
+        print(f"OCR Response: {ocr_response}")
         
-        return enhanced_result
+        # Try to extract text from pages
+        raw_text = ""
+        if hasattr(ocr_response, 'pages') and ocr_response.pages:
+            # Combine text from all pages
+            for page in ocr_response.pages:
+                if hasattr(page, 'content'):
+                    raw_text += page.content + "\n"
+                elif hasattr(page, 'text'):
+                    raw_text += page.text + "\n"
+        
+        # If we couldn't extract text, use the string representation
+        if not raw_text:
+            raw_text = str(ocr_response)
+        
+        return raw_text
     except Exception as e:
         print(f"Error processing image: {e}")
-        return None
+        return json.dumps({"error": f"OCR processing failed: {str(e)}"})
 
 def extract_coffee_info(ocr_result):
     """Parse the structured information from OCR result"""
-    # Get recommendation agent
-    agents = setup_agents()
-    recommendation_agent = agents["recommendation_agent"]
-    
-    # Use ControlFlow to extract structured information
-    coffee_info = recommendation_agent.run(f"""
-    Based on this OCR result from a coffee package: 
-    {ocr_result}
-    
-    Extract and return a JSON object with these fields:
-    - origin: The country or region of origin
-    - roast_level: Light, Medium, or Dark
-    - variety: Type of coffee bean
-    - process: Processing method
-    - recommended_grind: Recommended grind size
-    - recommended_temp: Recommended water temperature in Celsius
-    - recommended_time: Recommended brewing time in minutes:seconds format
-    
-    Use your knowledge of coffee to fill in reasonable recommendations for brewing parameters.
-    """)
-    
-    return coffee_info
+    try:
+        # Simple text-based extraction without ControlFlow
+        info = {
+            "origin": "Unknown",
+            "roast_level": "Medium",
+            "variety": "Arabica",
+            "process": "Washed"
+        }
+        
+        # Check if ocr_result is valid
+        if isinstance(ocr_result, str) and len(ocr_result) > 10:
+            # Simple text-based extraction
+            text = ocr_result.lower()
+            
+            # Extract origin
+            origins = ["colombia", "ethiopia", "brazil", "kenya", "guatemala", "costa rica"]
+            for origin in origins:
+                if origin in text:
+                    info["origin"] = origin.title()
+                    break
+            
+            # Extract roast level
+            if "light roast" in text or "light-roast" in text:
+                info["roast_level"] = "Light"
+            elif "dark roast" in text or "dark-roast" in text:
+                info["roast_level"] = "Dark"
+            
+            # Extract variety
+            if "robusta" in text:
+                info["variety"] = "Robusta"
+            
+            # Extract process
+            if "natural" in text or "dry process" in text:
+                info["process"] = "Natural"
+            elif "honey" in text or "honey process" in text:
+                info["process"] = "Honey"
+        
+        return json.dumps(info)
+    except Exception as e:
+        print(f"Error extracting coffee info: {e}")
+        return json.dumps({"error": f"Information extraction failed: {str(e)}"})
