@@ -36,6 +36,7 @@ data/training_images/*
 !data/training_images/.gitkeep
 .env
 *.log
+.sesskey
 
 # OS specific
 .DS_Store
