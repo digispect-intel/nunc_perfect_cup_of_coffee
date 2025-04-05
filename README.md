@@ -1,6 +1,10 @@
-# AI Coffee Recommender
+# Perfect Cup of Coffee
 
-A smart application that recommends coffee based on taste preferences and package analysis, developed for the AI Hackathon #3 - Next Level Coffee Track.
+An AI-powered application that helps coffee lovers find their perfect brew. Developed for the AI Hackathon #3 - Next Level Coffee Track.
+
+## Repository
+
+https://github.com/digispect-intel/nunc_perfect_cup_of_coffee
 
 ## Features
 
@@ -21,17 +25,19 @@ A smart application that recommends coffee based on taste preferences and packag
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/coffee-recommender.git
-   cd coffee-recommender
+   git clone https://github.com/digispect-intel/nunc_perfect_cup_of_coffee.git
+   cd nunc_perfect_cup_of_coffee
    ```
 
-2. Create and activate a virtual environment:
+2. Create and activate a virtual environment with Python 3.11:
    ```
-   python3.11 -m venv env source env/bin/activate
-   source env/bin/activate  # On Windows: py -3.11 -m venv env env\Scripts\activate
-
-
-
+   # Linux/macOS
+   python3.11 -m venv env
+   source env/bin/activate
+   
+   # Windows
+   py -3.11 -m venv env
+   env\Scripts\activate
    ```
 
 3. Install dependencies:
@@ -48,6 +54,11 @@ A smart application that recommends coffee based on taste preferences and packag
    ```
    http://127.0.0.1:5001
    ```
+   
+   If port 5001 is already in use, modify the port in app.py:
+   ```python
+   serve(port=5002)
+   ```
 
 ## Project Structure
 
@@ -56,9 +67,13 @@ A smart application that recommends coffee based on taste preferences and packag
 - `static/`: Static assets (CSS, JS, images)
 - `data/`: Data files and sample images
 
-## Contributing
+## Hackathon Information
 
-This project was created during the AI Hackathon #3. Feel free to fork, modify, and use it as a starting point for your own projects.
+This project was developed for the AI Hackathon #3 - Next Level Coffee Track, focusing on creating AI-powered solutions to enhance the coffee brewing experience.
+
+## Team
+
+Team: Perfect Cup of Coffee
 
 ## License
 
