@@ -2,10 +2,6 @@
 
 An AI-powered application that helps coffee lovers find their perfect brew. Developed for the AI Hackathon #3 - Next Level Coffee Track.
 
-## Repository
-
-https://github.com/digispect-intel/nunc_perfect_cup_of_coffee
-
 ## Features
 
 - **Taste Preference Analysis**: Select your preferred coffee characteristics to get personalized recommendations
@@ -55,11 +51,6 @@ https://github.com/digispect-intel/nunc_perfect_cup_of_coffee
    http://127.0.0.1:5001
    ```
    
-   If port 5001 is already in use, modify the port in app.py:
-   ```python
-   serve(port=5002)
-   ```
-
 ## Project Structure
 
 - `app.py`: Main application file with routes
