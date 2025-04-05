@@ -4,154 +4,213 @@ from modules.ocr import process_image, extract_coffee_info
 
 app, rt = fast_app(hdrs=(
     Link(rel="stylesheet", href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"),
+    Link(rel="stylesheet", href="/static/styles.css"),
 ))
 
 @rt("/")
 def get():
-    return Titled("Coffee Recommender", 
-        Main(cls="max-w-3xl mx-auto px-4 py-8")(
-            H1("AI Coffee Recommender", cls="text-3xl font-bold text-center mb-6"),
-            P("Find your perfect coffee match based on your taste preferences", cls="text-center mb-8"),
+    return Titled("Next Level Coffee | nunc.", 
+        Main(cls="max-w-4xl mx-auto px-4 py-8")(
+            H1("Perfect Cup of Coffee", cls="title-main text-center mb-2"),
+            H2("For Everyone", cls="subtitle text-center mb-6"),
+            P("Find your perfect coffee match based on your taste preferences", cls="text-center mb-8 text-muted"),            
+                       
+            Div(id="message-container", cls="hidden bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4")(
+                P(id="message-text", cls="text-center")
+            ),
             
-            # Preference Form
-            Div(cls="bg-amber-50 rounded-lg p-6 mb-6 shadow-md")(
-                H2("Your Taste Preferences", cls="text-xl font-semibold mb-4"),
-                Form(id="preference-form", action="/recommend", method="post")(
-                    # Taste Profile 1: Strong-Light
+            Form(id="coffee-form", action="/process", method="post", enctype="multipart/form-data")(
+                Div(cls="card rounded-lg p-6 mb-6 shadow-md")(
+                    H2("Your Taste Preferences", cls="text-2xl mb-4"),
+                    
                     Div(cls="mb-4")(
-                        Label("Intensity:", fr="intensity", cls="block mb-2 font-medium"),
-                        Select(id="intensity", name="intensity", cls="w-full p-2 border rounded")(
+                        Label("Intensity:", fr="intensity", cls="block mb-2 font-bold"),
+                        Select(id="intensity", name="intensity", cls="w-full p-2 border rounded bg-white")(
                             Option("Strong", value="strong"),
                             Option("Medium", value="medium", selected="selected"),
                             Option("Light", value="light")
                         )
                     ),
                     
-                    # Taste Profile 2: Fruity-Bold
                     Div(cls="mb-4")(
-                        Label("Flavor Profile:", fr="flavor", cls="block mb-2 font-medium"),
-                        Select(id="flavor", name="flavor", cls="w-full p-2 border rounded")(
+                        Label("Flavor Profile:", fr="flavor", cls="block mb-2 font-bold"),
+                        Select(id="flavor", name="flavor", cls="w-full p-2 border rounded bg-white")(
                             Option("Fruity", value="fruity"),
                             Option("Bold", value="bold", selected="selected")
                         )
                     ),
                     
-                    # Taste Profile 3: Sour-Bitter
                     Div(cls="mb-4")(
-                        Label("Acidity:", fr="acidity", cls="block mb-2 font-medium"),
-                        Select(id="acidity", name="acidity", cls="w-full p-2 border rounded")(
+                        Label("Acidity:", fr="acidity", cls="block mb-2 font-bold"),
+                        Select(id="acidity", name="acidity", cls="w-full p-2 border rounded bg-white")(
                             Option("Sour", value="sour"),
                             Option("Bitter", value="bitter", selected="selected")
                         )
                     ),
                     
-                    # Drink Type Selector
                     Div(cls="mb-6")(
-                        Label("What kind of drink?", fr="drink_type", cls="block mb-2 font-medium"),
-                        Select(id="drink_type", name="drink_type", cls="w-full p-2 border rounded")(
+                        Label("What kind of drink?", fr="drink_type", cls="block mb-2 font-bold"),
+                        Select(id="drink_type", name="drink_type", cls="w-full p-2 border rounded bg-white")(
                             Option("Espresso", value="espresso", selected="selected"),
                             Option("Americano", value="americano")
                         )
                     ),
+                ),
+                
+                Div(cls="card rounded-lg p-6 mb-6 shadow-md")(
+                    H2("Or Upload a Coffee Package", cls="text-2xl mb-4"),
+                    P("We'll analyze the package to recommend brewing parameters", cls="mb-4 text-sm text-muted"),
                     
-                    Button("Get Recommendations", type="submit", cls="w-full bg-amber-700 text-white py-2 px-4 rounded hover:bg-amber-800")
-                )
-            ),
-            
-            # Image Upload Section
-            Div(cls="bg-amber-50 rounded-lg p-6 mb-6 shadow-md")(
-                H2("Or Upload a Coffee Package", cls="text-xl font-semibold mb-4"),
-                P("We'll analyze the package to recommend brewing parameters", cls="mb-4 text-sm"),
-                Form(id="upload-form", action="/analyze", method="post", enctype="multipart/form-data")(
                     Div(cls="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center")(
                         Input(type="file", id="coffee-image", name="coffee-image", cls="hidden", accept="image/*"),
-                        Label(fr="coffee-image", cls="cursor-pointer bg-amber-100 px-4 py-2 rounded hover:bg-amber-200")("Select Image"),
-                        P("or drag and drop", cls="mt-2 text-sm text-gray-500")
+                        Label(fr="coffee-image", cls="cursor-pointer bg-white px-4 py-2 rounded hover:bg-gray-100 font-bold")("Select Image"),
+                        P("or drag and drop", cls="mt-2 text-sm text-muted")
                     ),
                     Div(id="image-preview", cls="mt-4 hidden"),
-                    Div(cls="mt-4")(
-                        Button("Analyze Package", type="submit", cls="w-full bg-amber-700 text-white py-2 px-4 rounded hover:bg-amber-800")
-                    )
+                ),
+                
+                Div(cls="mt-4")(
+                    Button("Find Your Perfect Coffee", type="submit", cls="w-full btn-primary py-3 px-4 rounded font-bold text-xl")
                 )
             ),
             
-            # Results Section (hidden initially)
-            Div(id="results", cls="bg-amber-50 rounded-lg p-6 shadow-md hidden")(
-                H2("Your Coffee Match", cls="text-xl font-semibold mb-4"),
+            Div(id="results", cls="card rounded-lg p-6 shadow-md hidden")(
+                H2("Your Coffee Match", cls="text-2xl mb-4"),
                 Div(id="recommendation-results")
             )
         )
     )
 
-
-@rt("/recommend", methods=["POST"])
-async def post(request):
+async def process_preferences(request):
     form = await request.form()
-    strong_light = form.get("strong_light")
-    fruity_bold = form.get("fruity_bold")
-    sour_bitter = form.get("sour_bitter")
+    intensity = form.get("intensity")
+    flavor = form.get("flavor")
+    acidity = form.get("acidity")
     drink_type = form.get("drink_type")
-    
-    # This would be where you'd implement your recommendation logic
-    # For demo purposes, just return the values
     
     return Titled("Coffee Recommendation Results",
         Container(cls="max-w-3xl mx-auto px-4 py-8")(
-            H1("Your Coffee Match", cls="text-3xl font-bold text-center mb-6"),
-            Div(cls="bg-amber-50 rounded-lg p-6 shadow-md")(
-                H2("Based on Your Preferences", cls="text-xl font-semibold mb-4"),
-                P(f"Strong-Light: {strong_light}/10"),
-                P(f"Fruity-Bold: {fruity_bold}/10"),
-                P(f"Sour-Bitter: {sour_bitter}/10"),
-                P(f"Drink Type: {drink_type}"),
+            Div(cls="flex justify-between items-center mb-8")(
+                H1("nunc.", cls="title-main text-left"),
+                H2("Perfect Cup of Coffee", cls="text-right text-lg font-bold")
+            ),
+            H1("Your Coffee Match", cls="text-4xl text-center mb-6"),
+            Div(cls="card rounded-lg p-6 shadow-md")(
+                H2("Based on Your Preferences", cls="text-2xl mb-4"),
+                P(f"Intensity: {intensity}", cls="text-muted"),
+                P(f"Flavor Profile: {flavor}", cls="text-muted"),
+                P(f"Acidity: {acidity}", cls="text-muted"),
+                P(f"Drink Type: {drink_type}", cls="text-muted"),
                 
-                Div(cls="mt-6 p-4 bg-amber-100 rounded-lg")(
-                    H3("Recommended Coffee", cls="font-semibold mb-2"),
+                Div(cls="mt-6 p-4 bg-white rounded-lg border border-gray-200")(
+                    H3("Recommended Coffee", cls="font-bold mb-2"),
                     P("Ethiopian Yirgacheffe", cls="text-lg"),
-                    P("Light roast, fruity with citrus notes", cls="text-sm text-gray-600"),
+                    P("Light roast, fruity with citrus notes", cls="text-sm text-muted"),
                     
-                    H3("Brewing Parameters", cls="font-semibold mt-4 mb-2"),
-                    P("Grind Size: Medium-fine"),
-                    P("Water Temperature: 92°C"),
-                    P("Brewing Time: 2:30 minutes")
+                    H3("Brewing Parameters", cls="font-bold mt-4 mb-2"),
+                    P("Grind Size: Medium-fine", cls="text-muted"),
+                    P("Water Temperature: 92°C", cls="text-muted"),
+                    P("Brewing Time: 2:30 minutes", cls="text-muted")
                 ),
                 
                 Div(cls="mt-6")(
-                    A("← Back to Home", href="/", cls="text-amber-700 hover:underline")
+                    A("← Back to Home", href="/", cls="text-accent hover:underline font-bold")
                 )
             )
         )
     )
 
-@rt("/analyze", methods=["POST"])
-async def post(request):
-    # This would handle the image upload and analysis
-    # For demo purposes, just return a placeholder result
+async def analyze_image(request):
+    form = await request.form()
+    
+    # In a real implementation, you would:
+    # 1. Get the image file from the form
+    # 2. Process it with your OCR module
+    # 3. Extract coffee information
+    # For demo purposes, we'll use placeholder data
     
     return Titled("Coffee Package Analysis",
         Container(cls="max-w-3xl mx-auto px-4 py-8")(
-            H1("Coffee Package Analysis", cls="text-3xl font-bold text-center mb-6"),
-            Div(cls="bg-amber-50 rounded-lg p-6 shadow-md")(
-                H2("Detected Coffee Information", cls="text-xl font-semibold mb-4"),
+            Div(cls="flex justify-between items-center mb-8")(
+                H1("nunc.", cls="title-main text-left"),
+                H2("Perfect Cup of Coffee", cls="text-right text-lg font-bold")
+            ),
+            H1("Coffee Package Analysis", cls="text-4xl text-center mb-6"),
+            Div(cls="card rounded-lg p-6 shadow-md")(
+                H2("Detected Coffee Information", cls="text-2xl mb-4"),
                 
-                Div(cls="mt-6 p-4 bg-amber-100 rounded-lg")(
-                    H3("Package Details", cls="font-semibold mb-2"),
-                    P("Origin: Colombia"),
-                    P("Roast Level: Medium"),
-                    P("Variety: Arabica"),
-                    P("Process: Washed"),
+                Div(cls="mt-6 p-4 bg-white rounded-lg border border-gray-200")(
+                    H3("Package Details", cls="font-bold mb-2"),
+                    P("Origin: Colombia", cls="text-muted"),
+                    P("Roast Level: Medium", cls="text-muted"),
+                    P("Variety: Arabica", cls="text-muted"),
+                    P("Process: Washed", cls="text-muted"),
                     
-                    H3("Recommended Brewing Parameters", cls="font-semibold mt-4 mb-2"),
-                    P("Grind Size: Medium"),
-                    P("Water Temperature: 94°C"),
-                    P("Brewing Time: 3:00 minutes")
+                    H3("Recommended Brewing Parameters", cls="font-bold mt-4 mb-2"),
+                    P("Grind Size: Medium", cls="text-muted"),
+                    P("Water Temperature: 94°C", cls="text-muted"),
+                    P("Brewing Time: 3:00 minutes", cls="text-muted")
                 ),
                 
                 Div(cls="mt-6")(
-                    A("← Back to Home", href="/", cls="text-amber-700 hover:underline")
+                    A("← Back to Home", href="/", cls="text-accent hover:underline font-bold")
                 )
             )
         )
     )
+
+@rt("/process", methods=["POST"])
+async def post(request):
+    form = await request.form()
+    
+    # Check if image was uploaded
+    has_image = False
+    if "coffee-image" in form and hasattr(form["coffee-image"], "filename") and form["coffee-image"].filename:
+        has_image = True
+    
+    # Check if all taste preferences are empty (shouldn't happen with select boxes)
+    intensity = form.get("intensity")
+    flavor = form.get("flavor")
+    acidity = form.get("acidity")
+    drink_type = form.get("drink_type")
+    has_preferences = intensity or flavor or acidity or drink_type
+    
+    # If nothing provided, use default
+    if not has_image and not has_preferences:
+        return Titled("Coffee Recommendation Results",
+            Container(cls="max-w-3xl mx-auto px-4 py-8")(
+                Div(cls="flex justify-between items-center mb-8")(
+                    H1("nunc.", cls="title-main text-left"),
+                    H2("Perfect Cup of Coffee", cls="text-right text-lg font-bold")
+                ),
+                H1("Your Coffee Match", cls="text-4xl text-center mb-6"),
+                Div(cls="card rounded-lg p-6 shadow-md")(
+                    H2("Default Standard", cls="text-2xl mb-4"),
+                    P("Using our default recommendations since no preferences were provided.", cls="text-muted mb-4"),
+                    
+                    Div(cls="mt-6 p-4 bg-white rounded-lg border border-gray-200")(
+                        H3("Recommended Coffee", cls="font-bold mb-2"),
+                        P("House Blend", cls="text-lg"),
+                        P("Medium roast, balanced flavor profile", cls="text-sm text-muted"),
+                        
+                        H3("Brewing Parameters", cls="font-bold mt-4 mb-2"),
+                        P("Grind Size: Medium", cls="text-muted"),
+                        P("Water Temperature: 93°C", cls="text-muted"),
+                        P("Brewing Time: 3:00 minutes", cls="text-muted")
+                    ),
+                    
+                    Div(cls="mt-6")(
+                        A("← Back to Home", href="/", cls="text-accent hover:underline font-bold")
+                    )
+                )
+            )
+        )
+    
+    # Process based on image if available
+    if has_image:
+        return await analyze_image(request)
+    
+    # Otherwise process based on preferences
+    return await process_preferences(request)
 
 serve()

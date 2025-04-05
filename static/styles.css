@@ -1,0 +1,115 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Libre+Baskerville:wght@400;700&display=swap');
+
+:root {
+    --color-dark: #282726;
+    --color-secondary: #ada9a0;
+    --color-accent: #ffbb72;
+    --color-accent-hover: #FFC481;
+    --color-bg-start: #FACCCE;
+    --color-bg-end: #F3F0E9;
+    --color-light: #e6e1d8;
+    --color-text-muted: #8f8a80;
+    --color-heading: #45423C;
+}
+
+body {
+    font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", Segoe UI Symbol, "Noto Color Emoji";
+    background: linear-gradient(to bottom left, var(--color-bg-start), var(--color-bg-end));
+    background-attachment: fixed;
+    color: var(--color-dark);
+    min-height: 100vh;
+    font-size: 18px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Libre Baskerville', ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+    font-weight: 700;
+    color: #111827;
+}
+
+.btn-primary {
+    background-color: var(--color-accent);
+    color: var(--color-dark);
+    font-weight: 700;
+    font-size: 18px;
+}
+
+.btn-primary:hover {
+    background-color: var(--color-accent-hover);
+}
+
+.card {
+    background-color: white;
+    border: 1px solid var(--color-light);
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.text-accent {
+    color: var(--color-accent);
+}
+
+.text-muted {
+    color: var(--color-text-muted);
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 28px;
+}
+
+input, select, textarea, ::placeholder {
+    color: var(--color-dark);
+    font-size: 18px;
+}
+
+.title-main {
+    font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", Segoe UI Symbol, "Noto Color Emoji";
+    color: var(--color-heading);
+    font-size: 72px;
+    font-weight: 700;
+    line-height: 80px;
+    letter-spacing: -0.02em;
+}
+
+.subtitle {
+    font-family: 'Libre Baskerville', ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+    color: var(--color-heading);
+    font-size: 72px;
+    font-weight: 700;
+    line-height: 80px;
+}
+
+.form-label {
+    font-weight: 700;
+    font-size: 20px;
+    color: var(--color-dark);
+    margin-bottom: 8px;
+    display: block;
+}
+
+.btn {
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: 0.01em;
+    padding: 12px 24px;
+}
+
+h2 {
+    font-size: 36px;
+    margin-bottom: 20px;
+}
+
+h3 {
+    font-size: 28px;
+    margin-bottom: 16px;
+}
+
+select, input {
+    border-radius: 6px;
+    border-color: var(--color-light);
+    padding: 12px 16px;
+    margin-bottom: 16px;
+}
+
+.card {
+    padding: 24px;
+}
