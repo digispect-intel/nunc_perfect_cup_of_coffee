@@ -124,7 +124,7 @@ After investigating the dataset in terms of devide ID 10000000812efd14, recipe I
 ![image](https://github.com/user-attachments/assets/6f690733-8691-4851-8af0-beab206b1104)
 ![image](https://github.com/user-attachments/assets/638ed3d3-6da4-4945-9fe8-0f1944fcf373)
 
-# Actionable Insights from Coffee Review Dataset
+## Actionable Insights from Coffee Review Dataset
 After analyzing **1,246 coffee reviews** from the open-source dataset(https://www.kaggle.com/datasets/schmoyote/coffee-reviews-dataset), here are actionable insights, which can be integrated with nunc's own customer reviews and their nunc-branded coffee beans:
 ### ☕ Origin Matters
 - **Ethiopian coffees** consistently score highest (**92–95 points**), especially those with fruit-forward profiles.
