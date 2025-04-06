@@ -113,7 +113,7 @@ The system generates specific brewing parameters:
 
 As outlined in the project README:
 We've implemented a feedback loop that will allow the system to continuously improve as users report their actual results, creating a self-optimizing recommendation engine.
-## ** Actionable Insights from nunc Dataset
+## Actionable Insights from nunc Dataset
 After investigating the dataset in terms of devide ID 10000000812efd14, recipe ID 31, here are actinable insights:
 * (water temperature) There is a slight decrease in brewer temperature when water comes into the coffee ground, and it increases later on. The temperature shall ideally remain stable and constant throughout the brewing process
 * (water volume) There is an obvious change of water flow during brewing. In order to asure consistency, such change shall be avoid.
