@@ -146,7 +146,7 @@ async def process_preferences(request):
     
     return Titled("Next Level Coffee | nunc.",
         Div(cls="max-w-5xl mx-auto px-4 py-8")(
-            Div(cls="flex justify-between items-center mb-8")(
+            Div(cls="flex justify-between items-center text-center mb-8")(
                 # A("← Back to Home", href="/", cls="text-accent hover:underline font-bold mb-4 block"),
                 H1("Perfect Cup of Coffee", cls="title-main text-center mb-2")
 
@@ -333,7 +333,7 @@ async def post(request):
             Div(cls="container max-w-3xl mx-auto px-4 py-8")(
                 Div(cls="flex justify-between items-center mb-8")(
                     H1("nunc.", cls="title-main text-left"),
-                    H2("Perfect Cup of Coffee", cls="text-right text-lg font-bold")
+                    H2("Perfect Cup of Coffee", cls="title-main text-center text-lg font-bold")
                 ),
                 H1("Your Coffee Match", cls="text-4xl text-center mb-6"),
                 Div(cls="card rounded-lg p-6 shadow-md")(
