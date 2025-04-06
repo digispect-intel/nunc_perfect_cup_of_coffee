@@ -118,6 +118,8 @@ After investigating the dataset in terms of devide ID 10000000812efd14, recipe I
 * (water temperature) There is a slight decrease in brewer temperature when water comes into the coffee ground, and it increases later on. The temperature shall ideally remain stable and constant throughout the brewing process
 * (water volume) There is an obvious change of water flow during brewing. In order to asure consistency, such change shall be avoid.
 * (pressure) In one device with one coffee recipe, circuit pressure varies largely in brewing. For making a good coffee a constant and stable pressure is desired.
+
+
 ![image](https://github.com/user-attachments/assets/bd978503-90fd-4faf-ae25-2bdfdb943402)
 ![image](https://github.com/user-attachments/assets/6f690733-8691-4851-8af0-beab206b1104)
 ![image](https://github.com/user-attachments/assets/638ed3d3-6da4-4945-9fe8-0f1944fcf373)
