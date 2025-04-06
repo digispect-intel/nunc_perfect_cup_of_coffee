@@ -97,10 +97,10 @@ The system extracts four key attributes from coffee packages:
 
 The system generates specific brewing parameters:
 
-* Water: 93°C  
-* Ratio: 1:16  
-* Time: 2:30 mins (pour-over)  
-* Grind: Medium-coarse
+* Water: for ex., 93°C  
+* Ratio: for ex.,1:16 (but could be between 1:15 to 1:18 falling in line with espresso machine standard ratios)
+* Time: for ex., 2:30 mins (pour-over)  
+* Grind: for ex., Medium-coarse
 
 ## **Error Handling**
 
