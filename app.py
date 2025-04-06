@@ -11,6 +11,46 @@ if "MISTRAL_API_KEY" not in os.environ:
 app, rt = fast_app(hdrs=(
     Link(rel="stylesheet", href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"),
     Link(rel="stylesheet", href="/static/styles.css"),
+    Script("""
+    document.addEventListener('DOMContentLoaded', function() {
+        const fileInput = document.getElementById('coffee-image');
+        const previewDiv = document.getElementById('image-preview');
+        const previewImg = document.getElementById('preview-img');
+        const filenameDisplay = document.getElementById('filename-display');
+        const form = document.getElementById('coffee-form');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        
+        if (fileInput && previewDiv && previewImg && filenameDisplay) {
+            fileInput.addEventListener('change', function(e) {
+                if (this.files && this.files[0]) {
+                    const file = this.files[0];
+                    
+                    // Show the preview
+                    previewDiv.classList.remove('hidden');
+                    
+                    // Display the image
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImg.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                    
+                    // Display the filename
+                    filenameDisplay.textContent = file.name;
+                } else {
+                    // Hide the preview if no file selected
+                    previewDiv.classList.add('hidden');
+                }
+            });
+        }
+        
+        if (form && loadingOverlay) {
+            form.addEventListener('submit', function() {
+                loadingOverlay.classList.remove('hidden');
+            });
+        }
+    });
+    """)
 ))
 
 @rt("/")
@@ -72,9 +112,19 @@ def get():
                         Label(fr="coffee-image", cls="cursor-pointer bg-white px-4 py-2 rounded hover:bg-gray-100 font-bold")("Select Image"),
                         P("or drag and drop", cls="mt-2 text-sm text-muted")
                     ),
-                    Div(id="image-preview", cls="mt-4 hidden"),
+                    # Add this div for image preview
+                    Div(id="image-preview", cls="mt-4 hidden flex flex-col items-center")(
+                        Img(id="preview-img", cls="max-h-48 rounded-lg shadow-sm"),
+                        P(id="filename-display", cls="mt-2 text-sm text-muted")
+                    ),
                 ),
-                
+                Div(id="loading-overlay", cls="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50")(
+                    Div(cls="bg-white p-6 rounded-lg shadow-lg text-center")(
+                        Div(cls="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto"),
+                        P("Analyzing your coffee image...", cls="mt-4 text-lg")
+                    )
+                ),
+
                 Div(cls="mt-4")(
                     Button("Find Your Perfect Coffee", type="submit", cls="w-full btn-primary py-3 px-4 rounded font-bold text-xl")
                 )
@@ -158,7 +208,6 @@ def parse_agent_response(response_text):
         print(f"Failed to parse JSON from: {response_text}")
         return {}
 
-
 async def analyze_image(request):
     form = await request.form()
     
@@ -176,35 +225,42 @@ async def analyze_image(request):
         "drink_type": drink_type
     }
     
-    # Get the uploaded image
     image_file = form.get("coffee-image")
+    image_url = None
     
     # Save the image temporarily
     if image_file and hasattr(image_file, "filename") and image_file.filename:
-        temp_path = f"data/temp_{image_file.filename}"
         import os
-        os.makedirs("data/temp", exist_ok=True)
-        temp_path = f"data/temp/{image_file.filename}"
-        with open(temp_path, "wb") as f:
+        import uuid
+        from modules.vision import analyze_coffee_image
+        
+        # Create a unique filename to avoid conflicts
+        unique_id = str(uuid.uuid4())[:8]
+        original_filename = image_file.filename
+        image_filename = f"{unique_id}_{original_filename}"
+        
+        # Ensure directory exists
+        os.makedirs("static/uploads", exist_ok=True)
+        
+        # Full path to save the image
+        save_path = f"static/uploads/{image_filename}"
+        
+        # Read and save the image
+        with open(save_path, "wb") as f:
             content = await image_file.read()
             f.write(content)
         
-        ocr_result = process_image(temp_path)
-        parsed_ocr = parse_agent_response(ocr_result)
-
-        coffee_info = extract_coffee_info(parsed_ocr)
+        # Process image using vision model
+        coffee_info = analyze_coffee_image(save_path)
         parsed_coffee_info = parse_agent_response(coffee_info)
 
         recommendation = get_recommendation(preferences, parsed_coffee_info)
         parsed_recommendation = parse_agent_response(recommendation)
-
-        # Clean up the temporary file
-        import os
-        os.remove(temp_path)
         
-        # Format the results for display
-        return create_results_page(parsed_coffee_info, parsed_recommendation)
-
+        # Set the image URL for display
+        image_url = f"/static/uploads/{image_filename}"
+        
+        return create_results_page(parsed_coffee_info, parsed_recommendation, image_url)
     else:
         # Handle case when no image is provided
         return Titled("Error",
@@ -214,17 +270,20 @@ async def analyze_image(request):
             )
         )
 
-def create_results_page(coffee_info, recommendation):
+def create_results_page(coffee_info, recommendation, image_url=None):
     """Create a results page from coffee info and recommendations"""
-    return Titled("Coffee Analysis Results | nunc.",
+    return Titled("Next Level Coffee | nunc.",
         Div(cls="max-w-4xl mx-auto px-4 py-8")(
             Div(cls="flex justify-between items-center mb-8")(
-                H1("Perfect Cup of Coffee", cls="title-main text-left")
+                H1("Perfect Cup of Coffee", cls="title-main text-center")
             ),
             H1("Coffee Package Analysis", cls="text-4xl text-center mb-6"),
             Div(cls="card rounded-lg p-6 shadow-md")(
                 H2("Detected Coffee Information", cls="text-2xl mb-4"),
-                
+                # Add image display if available
+                Div(cls="mb-6 text-center" if image_url else "hidden")(
+                    Img(src=image_url, cls="max-h-64 mx-auto rounded-lg shadow-md")
+                ) if image_url else "",
                 Div(cls="mt-6 p-4 bg-white rounded-lg border border-gray-200")(
                     H3("Package Details", cls="font-bold mb-2"),
                     P(f"Origin: {coffee_info.get('origin', 'Unknown')}", cls="text-muted"),

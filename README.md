@@ -69,3 +69,23 @@ Team: Perfect Cup of Coffee
 ## License
 
 MIT
+
+## Next Steps
+
+### OCR Module
+
+1. **Improve OCR Accuracy**:
+   - Add more specific prompt instructions to guide the OCR agent
+   - Include examples of different coffee package formats
+
+2. **Handle Edge Cases**:
+   - Add error handling for unusual images or low-quality photos
+   - Implement fallback strategies when text extraction is poor
+
+3. **Confidence Scores**:
+   - Add confidence levels for each extracted attribute
+   - Highlight low-confidence extractions for user verification
+
+4. **Image Preprocessing**:
+   - Add image enhancement before OCR (contrast adjustment, noise reduction)
+   - Implement cropping to focus on relevant text areas
