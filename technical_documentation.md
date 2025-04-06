@@ -124,6 +124,30 @@ After investigating the dataset in terms of devide ID 10000000812efd14, recipe I
 ![image](https://github.com/user-attachments/assets/6f690733-8691-4851-8af0-beab206b1104)
 ![image](https://github.com/user-attachments/assets/638ed3d3-6da4-4945-9fe8-0f1944fcf373)
 
+# Actionable Insights from Coffee Review Dataset
+After analyzing **1,246 coffee reviews** from the open-source dataset, here are actionable insights, which can be integrated with nunc's own customer reviews and their nunc-branded coffee beans:
+### ☕ Origin Matters
+- **Ethiopian coffees** consistently score highest (**92–95 points**), especially those with fruit-forward profiles.
+- Target sourcing from **Yirgacheffe** and **Guji** regions for top-tier quality.
+### 🛠️ Processing Impact
+- **Natural processing** enhances **berry notes**.
+- **Washed methods** bring out **floral characteristics**.
+- Choose the processing method to match your desired **flavor profile**.
+### 💰 Value Sweet Spot
+- Premium-quality coffees (**92+ scores**) are available in the **$4–6 per 100g** price range.
+- Particularly good value options come from **Ethiopia** and **Colombia**.
+<table>
+  <tr>
+    <td><img src="https://github.com/user-attachments/assets/180714cc-75b9-4c0c-99ef-b4c22b5acb30" alt="brewing_parameters" width="100%"/></td>
+    <td><img src="https://github.com/user-attachments/assets/41c23098-ae6e-47c9-b060-4614c561919d" alt="flavor_by_origin_heatmap" width="100%"/></td>
+  </tr>
+  <tr>
+    <td><img src="https://github.com/user-attachments/assets/7ca07154-391c-4ee7-8a66-4f39807fecaa" alt="process_flavor_radar" width="100%"/></td>
+    <td><img src="https://github.com/user-attachments/assets/1c8c6647-487f-416f-bf84-944cde9f58cb" alt="roast_flavor_radar" width="100%"/></td>
+  </tr>
+</table>
+
+
 ## **OCR Module Enhancement**
 
 * Improve OCR accuracy with more specific prompt instructions  
