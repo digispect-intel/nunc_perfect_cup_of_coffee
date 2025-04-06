@@ -32,6 +32,7 @@ env/
 *.swo
 
 # Project specific
+static/uploads/**/*
 data/**/*
 .env
 *.log
