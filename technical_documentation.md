@@ -7,7 +7,7 @@
 ## 2\. Tech Stack
 
 * Backend: Python with FastHTML framework  
-* AI Components: MistralAI API for OCR and LLM capabilities  
+* AI Components: MistralAI API for Vision-Model and LLM capabilities  
 * Agent Orchestration: ControlFlow framework  
 * Data Validation: Pydantic models  
 * Frontend: HTML with Tailwind CSS  
@@ -112,6 +112,7 @@ The system generates specific brewing parameters:
 ## 8\. Future Improvements
 
 As outlined in the project README:
+We've implemented a feedback loop that will allow the system to continuously improve as users report their actual results, creating a self-optimizing recommendation engine.
 
 ## **OCR Module Enhancement**
 
@@ -124,6 +125,7 @@ As outlined in the project README:
 * Add confidence levels for extracted attributes  
 * Implement user feedback mechanisms  
 * Expand the coffee profile database
+* Constrain Hard-coded values consulting Barista-champions/experts for more streamlined recommendation
 
 ## **UI/UX Improvements**
 
