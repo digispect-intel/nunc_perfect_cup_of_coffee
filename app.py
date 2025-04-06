@@ -144,12 +144,22 @@ async def process_preferences(request):
     acidity = form.get("acidity")
     drink_type = form.get("drink_type")
     
+    # Collect user preferences
+    preferences = {
+        "intensity": intensity,
+        "flavor_profile": flavor,  # Note: Changed from "flavor" to match our model
+        "acidity": acidity,
+        "drink_type": drink_type
+    }
+    
+    # Get recommendation using our recommender module
+    recommendation_json = get_recommendation(preferences)
+    recommendation = parse_agent_response(recommendation_json)
+    
     return Titled("Next Level Coffee | nunc.",
         Div(cls="max-w-5xl mx-auto px-4 py-8")(
-            Div(cls="flex justify-between items-center text-center mb-8")(
-                # A("← Back to Home", href="/", cls="text-accent hover:underline font-bold mb-4 block"),
+            Div(cls="flex justify-between items-center mb-8")(
                 H1("Perfect Cup of Coffee", cls="title-main text-center mb-2")
-
             ),
             H1("Your Coffee Match", cls="text-4xl text-center mb-6"),
             Div(cls="card rounded-lg p-6 shadow-md")(
@@ -161,13 +171,18 @@ async def process_preferences(request):
                 
                 Div(cls="mt-6 p-4 bg-white rounded-lg border border-gray-200")(
                     H3("Recommended Coffee", cls="font-bold mb-2"),
-                    P("Ethiopian Yirgacheffe", cls="text-lg"),
-                    P("Light roast, fruity with citrus notes", cls="text-sm text-muted"),
+                    P(recommendation.get("coffee_name", "Ethiopian Yirgacheffe"), cls="text-lg"),
+                    P(recommendation.get("description", "Light roast, fruity with citrus notes"), cls="text-sm text-muted"),
                     
                     H3("Brewing Parameters", cls="font-bold mt-4 mb-2"),
-                    P("Grind Size: Medium-fine", cls="text-muted"),
-                    P("Water Temperature: 92°C", cls="text-muted"),
-                    P("Brewing Time: 2:30 minutes", cls="text-muted")
+                    P(f"Grind Setting: {recommendation.get('grind_setting', 'Medium-fine')} μm", cls="text-muted"),
+                    P(f"Water Temperature: {recommendation.get('brewing_temp', 92)}°C", cls="text-muted"),
+                    P(f"Brewing Time: {recommendation.get('brewing_time', 150) // 60}:{recommendation.get('brewing_time', 150) % 60:02d} minutes", cls="text-muted"),
+                    P(f"Flow Rate: {recommendation.get('flow_rate', 'Steady 2ml/s')}", cls="text-muted"),
+                    P(f"Brew Ratio: {recommendation.get('brew_ratio', '1:2')}", cls="text-muted"),
+                    
+                    H3("Notes", cls="font-bold mt-4 mb-2") if recommendation.get("notes") else "",
+                    P(recommendation.get("notes", ""), cls="text-muted italic")
                 ),
                 
                 Div(cls="mt-6")(
