@@ -16,7 +16,8 @@
 
 ## 3\. Process Architecture
 
-![][image1]follows a modular architecture with four distinct layers:
+![agentic_flow](https://github.com/user-attachments/assets/338b769f-9370-4547-a4a1-8ea03c76986f)
+follows a modular architecture with four distinct layers:
 
 * User Interface Layer: Handles user interaction through web forms and image uploads  
 * Data Storage Layer: Manages temporary image storage and coffee profile data  
@@ -27,7 +28,8 @@ The data flows from user inputs through processing pipelines to generate persona
 
 ## 4\. Detailed Agentic Architecture
 
-![][image2]system leverages an agentic workflow architecture:
+![architecture](https://github.com/user-attachments/assets/5efae409-57a8-4360-9e62-14125773d5dc)
+system leverages an agentic workflow architecture:
 
 1. Request Processing: Routes user inputs to appropriate handlers  
 2. Image Analysis: For uploaded coffee packages, performs OCR and extracts structured data  
