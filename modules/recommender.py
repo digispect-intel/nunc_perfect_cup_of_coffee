@@ -172,17 +172,25 @@ class BrewingRecommendation(BaseModel):
     brewing_time: int = Field(description="Recommended brewing time in seconds")
     notes: Optional[str] = Field(None, description="Additional brewing notes or tips")
 
-def get_recommendation(preferences, coffee_info=None):
+def get_recommendation(preferences, coffee_info=None, history=None):
     """Get coffee recommendations based on user preferences and coffee information
     
     Args:
-        preferences (dict): User taste preferences (intensity, flavor, acidity, drink_type)
+        preferences (dict): User taste preferences (intensity, flavor_profile, acidity, drink_type)
         coffee_info (dict, optional): Coffee information extracted from package image
+        history (list, optional): Previous user preferences and recommendations
         
     Returns:
         dict: Detailed brewing recommendations
     """
     try:
+        # Print debug information
+        print(f"Generating recommendation with preferences: {preferences}")
+        if coffee_info:
+            print(f"Coffee info provided: {coffee_info}")
+        if history:
+            print(f"User has {len(history)} previous recommendations")
+        
         # Get recommendation agent
         agents = setup_agents()
         recommendation_agent = agents["recommendation_agent"]
@@ -204,22 +212,63 @@ def get_recommendation(preferences, coffee_info=None):
         # Add calculated parameters to context
         params_str = "\nCalculated Parameters:\n" + "\n".join([f"- {key}: {value}" for key, value in calculated_params.items()])
         
+        # Add history context if available
+        history_context = ""
+        if history and len(history) > 0:
+            history_context = "\nUser History:\n"
+            for i, entry in enumerate(history[-3:]):  # Use last 3 entries
+                rec = entry.get('recommendation', {})
+                pref = entry.get('preferences', {})
+                feedback = entry.get('feedback', 'unknown')
+                comments = entry.get('feedback_comments', '')
+                
+                history_context += f"- Previous recommendation {i+1}: {rec.get('coffee_name', 'Unknown')} "
+                history_context += f"(Origin: {rec.get('origin', 'Unknown')}, "
+                history_context += f"Roast: {rec.get('roast_level', 'Unknown')})\n"
+                history_context += f"  User preferences: {pref.get('intensity', '')}, {pref.get('flavor_profile', '')}, {pref.get('acidity', '')}\n"
+                history_context += f"  User feedback: {feedback}\n"
+                if comments:
+                    history_context += f"  User comments: \"{comments}\"\n"
+        
+        # Adjust for origin preference if specified
+        origin_context = ""
+        if preferences.get('origin_preference') and preferences.get('origin_preference') != 'any':
+            origin_pref = preferences.get('origin_preference')
+            origin_mapping = {
+                'african': "African coffees like Ethiopian, Kenyan, or Rwandan that are known for bright acidity and fruity notes",
+                'latin_american': "Latin American coffees like Colombian, Costa Rican, or Guatemalan that are known for balance and chocolate notes",
+                'asian_pacific': "Asian/Pacific coffees like Sumatran, Indonesian, or Vietnamese that are known for earthy, spicy notes and full body"
+            }
+            if origin_pref in origin_mapping:
+                origin_context = f"\nUser has expressed preference for {origin_mapping[origin_pref]}."
+        
         # Use ControlFlow to generate recommendations with a user message
         prompt = f"""
         Based on these coffee preferences:
         {preferences_str}
         {coffee_info_str}
         {params_str}
+        {history_context}
+        {origin_context}
         
         Provide a coffee recommendation with brewing parameters tailored to these preferences.
         Take into account the coffee origin, roast level, and user's taste preferences to provide accurate recommendations.
         Use the calculated parameters as a starting point but feel free to adjust them based on your expertise.
+        
+        If the user has provided feedback on previous recommendations, use this to refine your recommendation.
+        Pay special attention to any detailed comments the user has provided about previous recommendations.
+        Positive feedback suggests similar coffees, while negative feedback suggests trying different characteristics.
         """
         
+        # Create a structured output model
         recommendation = recommendation_agent.run(prompt, result_type=BrewingRecommendation)
         
         # Convert to dictionary for JSON serialization
         result = recommendation.model_dump()
+        
+        # Print the final recommendation for debugging
+        print(f"Generated recommendation: {result}")
+        
         return json.dumps(result)
         
     except Exception as e:

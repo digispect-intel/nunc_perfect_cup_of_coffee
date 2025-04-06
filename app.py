@@ -143,18 +143,35 @@ async def process_preferences(request):
     flavor = form.get("flavor")
     acidity = form.get("acidity")
     drink_type = form.get("drink_type")
+    origin_pref = form.get("origin_pref", "any")
     
     # Collect user preferences
     preferences = {
         "intensity": intensity,
         "flavor_profile": flavor,  # Note: Changed from "flavor" to match our model
         "acidity": acidity,
-        "drink_type": drink_type
+        "drink_type": drink_type,
+        "origin_preference": origin_pref
     }
     
-    # Get recommendation using our recommender module
-    recommendation_json = get_recommendation(preferences)
+    # Get session data
+    session = request.session
+    if "history" not in session:
+        session["history"] = []
+    
+    # Get recommendation using our recommender module with history
+    recommendation_json = get_recommendation(preferences, history=session.get("history", []))
     recommendation = parse_agent_response(recommendation_json)
+    
+    # Store this preference in history
+    session["history"].append({
+        "preferences": preferences,
+        "recommendation": recommendation
+    })
+    
+    # Limit history size
+    if len(session["history"]) > 5:
+        session["history"] = session["history"][-5:]
     
     return Titled("Next Level Coffee | nunc.",
         Div(cls="max-w-5xl mx-auto px-4 py-8")(
@@ -168,11 +185,15 @@ async def process_preferences(request):
                 P(f"Flavor Profile: {flavor}", cls="text-muted"),
                 P(f"Acidity: {acidity}", cls="text-muted"),
                 P(f"Drink Type: {drink_type}", cls="text-muted"),
+                P(f"Origin Preference: {origin_pref}", cls="text-muted") if origin_pref != "any" else "",
                 
                 Div(cls="mt-6 p-4 bg-white rounded-lg border border-gray-200")(
                     H3("Recommended Coffee", cls="font-bold mb-2"),
                     P(recommendation.get("coffee_name", "Ethiopian Yirgacheffe"), cls="text-lg"),
                     P(recommendation.get("description", "Light roast, fruity with citrus notes"), cls="text-sm text-muted"),
+                    
+                    H3("Origin", cls="font-bold mt-4 mb-2"),
+                    P(recommendation.get("origin", "Ethiopia"), cls="text-muted"),
                     
                     H3("Brewing Parameters", cls="font-bold mt-4 mb-2"),
                     P(f"Grind Setting: {recommendation.get('grind_setting', 'Medium-fine')} μm", cls="text-muted"),
@@ -185,12 +206,46 @@ async def process_preferences(request):
                     P(recommendation.get("notes", ""), cls="text-muted italic")
                 ),
                 
+                # Enhanced feedback mechanism with simple text input
+                Div(cls="mt-6 p-4 bg-white rounded-lg border border-gray-200")(
+                    H3("How was this recommendation?", cls="font-bold mb-2"),
+                    Form(action="/feedback", method="post")(
+                        Input(type="hidden", name="recommendation_id", value=recommendation.get("coffee_name", "")),
+                        Div(cls="flex space-x-4 mb-4")(
+                            Button("👍 Perfect!", type="submit", name="rating", value="good", 
+                                cls="px-4 py-2 bg-green-100 hover:bg-green-200 rounded"),
+                            Button("👎 Needs Improvement", type="submit", name="rating", value="bad", 
+                                cls="px-4 py-2 bg-red-100 hover:bg-red-200 rounded")
+                        ),
+                        Div(cls="mt-4")(
+                            Label("Your Comments (Optional):", fr="feedback_comments", cls="block mb-2 text-sm font-bold"),
+                            Input(type="text", id="feedback_comments", name="feedback_comments", 
+                                 placeholder="What did you like or dislike about this recommendation?", 
+                                 cls="w-full p-2 border rounded bg-white"),
+                            P("Your feedback helps us improve our recommendations.", cls="text-xs text-muted mt-1")
+                        ),
+                        Div(cls="mt-4")(
+                            Button("Submit Feedback", type="submit", cls="px-4 py-2 bg-accent text-dark hover:bg-accent-hover rounded font-bold")
+                        )
+                    )
+                ),
+                
+                # Previous recommendations (if any)
+                Div(cls="mt-6 p-4 bg-white rounded-lg border border-gray-200 hidden" if len(session.get("history", [])) <= 1 else "mt-6 p-4 bg-white rounded-lg border border-gray-200")(
+                    H3("Your Previous Recommendations", cls="font-bold mb-2"),
+                    Ul(cls="list-disc pl-5")(
+                        *[Li(f"{h['recommendation'].get('coffee_name', 'Unknown')} ({h['preferences'].get('intensity', '')} - {h['preferences'].get('flavor_profile', '')})") 
+                          for h in session.get("history", [])[:-1][-3:]]  # Last 3 excluding current
+                    )
+                ),
+                
                 Div(cls="mt-6")(
                     A("← Back to Home", href="/", cls="text-accent hover:underline font-bold")
                 )
             )
         )
     )
+
 
 
 def parse_agent_response(response_text):
@@ -231,14 +286,21 @@ async def analyze_image(request):
     flavor = form.get("flavor", "balanced")
     acidity = form.get("acidity", "balanced")
     drink_type = form.get("drink_type", "espresso")
+    origin_pref = form.get("origin_pref", "any")
     
     # Collect user preferences
     preferences = {
         "intensity": intensity,
-        "flavor": flavor,
+        "flavor_profile": flavor,
         "acidity": acidity,
-        "drink_type": drink_type
+        "drink_type": drink_type,
+        "origin_preference": origin_pref
     }
+    
+    # Get session data
+    session = request.session
+    if "history" not in session:
+        session["history"] = []
     
     image_file = form.get("coffee-image")
     image_url = None
@@ -269,11 +331,25 @@ async def analyze_image(request):
         coffee_info = analyze_coffee_image(save_path)
         parsed_coffee_info = parse_agent_response(coffee_info)
 
-        recommendation = get_recommendation(preferences, parsed_coffee_info)
+        # Get recommendation using history
+        recommendation = get_recommendation(preferences, parsed_coffee_info, session.get("history", []))
         parsed_recommendation = parse_agent_response(recommendation)
+        
+        # Store this preference and recommendation in history
+        session["history"].append({
+            "preferences": preferences,
+            "recommendation": parsed_recommendation
+        })
+        
+        # Limit history size
+        if len(session["history"]) > 5:
+            session["history"] = session["history"][-5:]
         
         # Set the image URL for display
         image_url = f"/static/uploads/{image_filename}"
+        
+        # Add request scope to coffee_info for session access in create_results_page
+        parsed_coffee_info["_scope"] = request.scope
         
         return create_results_page(parsed_coffee_info, parsed_recommendation, image_url)
     else:
@@ -285,8 +361,29 @@ async def analyze_image(request):
             )
         )
 
+
 def create_results_page(coffee_info, recommendation, image_url=None):
     """Create a results page from coffee info and recommendations"""
+    
+    # Get session data (we need to handle the case where there's no request context)
+    session = {}
+    try:
+        from starlette.requests import Request
+        request = Request(scope=coffee_info.get("_scope", {}))
+        session = request.session
+    except Exception:
+        session = {}
+    
+    # Prepare history display
+    history_display = ""
+    if "history" in session and len(session.get("history", [])) > 1:
+        history_items = [Li(f"{h['recommendation'].get('coffee_name', 'Unknown')} ({h['preferences'].get('intensity', '')} - {h['preferences'].get('flavor_profile', '')})") 
+                          for h in session.get("history", [])[:-1][-3:]]
+        history_display = Div(cls="mt-6 p-4 bg-white rounded-lg border border-gray-200")(
+            H3("Your Previous Recommendations", cls="font-bold mb-2"),
+            Ul(cls="list-disc pl-5")(*history_items)
+        )
+    
     return Titled("Next Level Coffee | nunc.",
         Div(cls="max-w-4xl mx-auto px-4 py-8")(
             Div(cls="flex justify-between items-center mb-8")(
@@ -317,6 +414,33 @@ def create_results_page(coffee_info, recommendation, image_url=None):
                     P(recommendation.get('description', 'No description available'), cls="text-muted"),
                     P(recommendation.get('notes', ''), cls="text-muted mt-2 italic")
                 ),
+                
+                # Enhanced feedback mechanism with simple text input
+                Div(cls="mt-6 p-4 bg-white rounded-lg border border-gray-200")(
+                    H3("How was this recommendation?", cls="font-bold mb-2"),
+                    Form(action="/feedback", method="post")(
+                        Input(type="hidden", name="recommendation_id", value=recommendation.get("coffee_name", "")),
+                        Div(cls="flex space-x-4 mb-4")(
+                            Button("👍 Perfect!", type="submit", name="rating", value="good", 
+                                cls="px-4 py-2 bg-green-100 hover:bg-green-200 rounded"),
+                            Button("👎 Needs Improvement", type="submit", name="rating", value="bad", 
+                                cls="px-4 py-2 bg-red-100 hover:bg-red-200 rounded")
+                        ),
+                        Div(cls="mt-4")(
+                            Label("Your Comments (Optional):", fr="feedback_comments", cls="block mb-2 text-sm font-bold"),
+                            Input(type="text", id="feedback_comments", name="feedback_comments", 
+                                 placeholder="What did you like or dislike about this recommendation?", 
+                                 cls="w-full p-2 border rounded bg-white"),
+                            P("Your feedback helps us improve our recommendations.", cls="text-xs text-muted mt-1")
+                        ),
+                        Div(cls="mt-4")(
+                            Button("Submit Feedback", type="submit", cls="px-4 py-2 bg-accent text-dark hover:bg-accent-hover rounded font-bold")
+                        )
+                    )
+                ),
+                
+                # Display history if available
+                history_display,
                 
                 Div(cls="mt-6")(
                     A("← Back to Home", href="/", cls="text-accent hover:underline font-bold")
@@ -379,5 +503,80 @@ async def post(request):
     
     # Otherwise process based on preferences
     return await process_preferences(request)
+
+@rt("/feedback", methods=["POST"])
+async def post_feedback(request):
+    form = await request.form()
+    recommendation_id = form.get("recommendation_id")
+    rating = form.get("rating")
+    comments = form.get("feedback_comments", "")
+    
+    # Get current timestamp
+    from datetime import datetime
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    # Here you would store the feedback in a database or log file
+    # For now, we'll just log it to the console and a simple feedback log file
+    feedback_data = {
+        "timestamp": timestamp,
+        "recommendation_id": recommendation_id,
+        "rating": rating,
+        "comments": comments
+    }
+    
+    print(f"Feedback received: {rating} for recommendation {recommendation_id}")
+    if comments:
+        print(f"User comments: {comments}")
+    
+    # Save feedback to a log file
+    try:
+        import os
+        import json
+        
+        # Create directory if it doesn't exist
+        os.makedirs("data", exist_ok=True)
+        
+        # Append to feedback log file
+        with open("data/feedback_log.jsonl", "a") as f:
+            f.write(json.dumps(feedback_data) + "\n")
+    except Exception as e:
+        print(f"Error saving feedback: {e}")
+    
+    # Update session data to record this feedback
+    session = request.session
+    if "history" in session and len(session["history"]) > 0:
+        # Add rating and comments to the most recent recommendation
+        session["history"][-1]["feedback"] = rating
+        if comments:
+            session["history"][-1]["feedback_comments"] = comments
+    
+    # Prepare thank you message based on the rating
+    thank_you_message = "Thank you for your positive feedback!" if rating == "good" else "Thank you for helping us improve!"
+    follow_up_message = "We're glad you enjoyed this recommendation!" if rating == "good" else "We'll use your feedback to improve our recommendations."
+    
+    # Add comment acknowledgment if provided
+    comment_acknowledgment = ""
+    if comments:
+        comment_acknowledgment = P("We've recorded your detailed comments. This helps us understand your preferences better.", cls="mb-4")
+    
+    # Redirect back to home with a thank you message
+    return Titled("Feedback Received | nunc.",
+        Div(cls="max-w-4xl mx-auto px-4 py-8 text-center")(
+            H1(thank_you_message, cls="text-4xl mb-6"),
+            P(follow_up_message, cls="mb-4"),
+            comment_acknowledgment,
+            P(f"Recommendation: {recommendation_id}", cls="text-sm text-muted mb-8"),
+            
+            # Offer next steps
+            Div(cls="flex justify-center space-x-4")(
+                A("← Back to Home", href="/", 
+                  cls="px-6 py-3 bg-accent text-dark font-bold rounded-lg hover:bg-accent-hover"),
+                A("Try Another Recommendation", href="/#coffee-form", 
+                  cls="px-6 py-3 border border-accent text-accent font-bold rounded-lg hover:bg-accent hover:text-dark")
+            )
+        )
+    )
+
+
 
 serve()
