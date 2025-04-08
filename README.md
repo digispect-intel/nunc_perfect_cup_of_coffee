@@ -6,7 +6,10 @@ An AI-powered application that helps coffee lovers find their perfect brew. Deve
 ## Important Documentation Links
 
 - [Technical Docs](https://github.com/digispect-intel/nunc_perfect_cup_of_coffee/blob/main/technical_documentation.md) - Architecture and Technical Overview
-- [Video Demo](https://youtu.be/DpqX16TDFxY)
+- [Video Demo (4 min)](https://youtu.be/DpqX16TDFxY)
+- [Video Presentation (9min)](https://www.youtube.com/watch?v=gRZpy-MYG2Q)
+
+
 
 ## Features
 
